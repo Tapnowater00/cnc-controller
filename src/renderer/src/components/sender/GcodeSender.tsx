@@ -42,6 +42,11 @@ export function GcodeSender({ onFileLoaded, externalLines }: { onFileLoaded?: (l
   const [historyOpen, setHistoryOpen] = useState(false)
   const [history, setHistory] = useState<{ path: string; date: string }[]>([])
   const listRef = useRef<HTMLDivElement>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+  const [viewportHeight, setViewportHeight] = useState(600)
+
+  const LINE_HEIGHT = 20
+  const OVERSCAN = 30
 
   const eta = useMemo(() => lines.length > 0 ? estimateETA(lines) : 0, [lines])
 
@@ -69,13 +74,23 @@ export function GcodeSender({ onFileLoaded, externalLines }: { onFileLoaded?: (l
     return () => { unsub1(); unsub2() }
   }, [filePath, history])
 
-  // Auto-scroll to current line
+  // Track viewport height so virtualization can react to resizes
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    setViewportHeight(el.clientHeight)
+    const obs = new ResizeObserver(() => setViewportHeight(el.clientHeight))
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  // Auto-scroll to current line (scroll container directly — children are virtualized)
   useEffect(() => {
     if (streaming && listRef.current) {
-      const item = listRef.current.children[streamingCurrentLine] as HTMLElement
-      item?.scrollIntoView({ block: 'center' })
+      const target = (streamingCurrentLine - 1) * LINE_HEIGHT - viewportHeight / 2
+      listRef.current.scrollTo({ top: Math.max(0, target), behavior: 'smooth' })
     }
-  }, [streamingCurrentLine, streaming])
+  }, [streamingCurrentLine, streaming, viewportHeight])
 
   async function openFile() {
     const result = await window.api.dialog.openFileContent()
@@ -169,26 +184,49 @@ export function GcodeSender({ onFileLoaded, externalLines }: { onFileLoaded?: (l
         </div>
       )}
 
-      {/* G-code preview */}
-      <div ref={listRef} className="flex-1 overflow-y-auto font-mono text-xs px-2 py-1">
-        {lines.map((line, i) => (
-          <div
-            key={i}
-            className={`px-1 leading-5 ${
-              streaming && i === streamingCurrentLine - 1
-                ? 'bg-blue-600/40 text-blue-200'
-                : i < streamingCurrentLine
-                ? 'text-zinc-600'
-                : line.trim().startsWith(';') || line.trim().startsWith('(')
-                ? 'text-zinc-500 italic'
-                : 'text-zinc-300'
-            }`}
-          >
-            <span className="text-zinc-700 select-none mr-1.5">{i + 1}</span>
-            {line}
-          </div>
-        ))}
-        {lines.length === 0 && (
+      {/* G-code preview (virtualized) */}
+      <div
+        ref={listRef}
+        onScroll={e => setScrollTop((e.target as HTMLDivElement).scrollTop)}
+        className="flex-1 overflow-y-auto font-mono text-xs px-2 py-1 relative"
+      >
+        {lines.length > 0 ? (
+          (() => {
+            const startIdx = Math.max(0, Math.floor(scrollTop / LINE_HEIGHT) - OVERSCAN)
+            const endIdx = Math.min(
+              lines.length,
+              Math.ceil((scrollTop + viewportHeight) / LINE_HEIGHT) + OVERSCAN
+            )
+            const visible = lines.slice(startIdx, endIdx)
+            return (
+              <div style={{ height: lines.length * LINE_HEIGHT, position: 'relative' }}>
+                <div style={{ position: 'absolute', top: startIdx * LINE_HEIGHT, left: 0, right: 0 }}>
+                  {visible.map((line, k) => {
+                    const i = startIdx + k
+                    return (
+                      <div
+                        key={i}
+                        style={{ height: LINE_HEIGHT }}
+                        className={`px-1 leading-5 ${
+                          streaming && i === streamingCurrentLine - 1
+                            ? 'bg-blue-600/40 text-blue-200'
+                            : i < streamingCurrentLine
+                            ? 'text-zinc-600'
+                            : line.trim().startsWith(';') || line.trim().startsWith('(')
+                            ? 'text-zinc-500 italic'
+                            : 'text-zinc-300'
+                        }`}
+                      >
+                        <span className="text-zinc-700 select-none mr-1.5">{i + 1}</span>
+                        {line}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()
+        ) : (
           <div className="text-zinc-600 text-center py-8">Open a G-code file to preview</div>
         )}
       </div>

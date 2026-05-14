@@ -5,12 +5,23 @@ import { useSettingsStore } from '../../stores/settingsStore'
 
 const STEP_SIZES = [0.001, 0.01, 0.1, 1, 10, 100]
 const RT_JOG_CANCEL = 0x85
+const AXIS_REGEX = /([XYZ])(-?\d*\.?\d+)/gi
+
+function parseJogDeltas(axes: string): { x?: number; y?: number; z?: number } {
+  const out: Record<string, number> = {}
+  for (const m of axes.matchAll(AXIS_REGEX)) {
+    out[m[1].toLowerCase()] = parseFloat(m[2])
+  }
+  return out
+}
 
 interface Props { onHomeConfirm: () => void }
 
 export function JogControls({ onHomeConfirm }: Props) {
   const connected = useMachineStore(s => s.connected)
   const state = useMachineStore(s => s.state)
+  const mpos = useMachineStore(s => s.mpos)
+  const grblSettings = useMachineStore(s => s.grblSettings)
   const send = useMachineStore(s => s.send)
   const sendRealtime = useMachineStore(s => s.sendRealtime)
   const units = useMachineStore(s => s.units)
@@ -24,8 +35,35 @@ export function JogControls({ onHomeConfirm }: Props) {
   const canJog = connected && (state === 'Idle' || state === 'Jog')
   const unit = units === 'mm' ? 'G21' : 'G20'
 
+  function softLimitViolation(axes: string): string | null {
+    const deltas = parseJogDeltas(axes)
+    const maxFor: Record<string, number | undefined> = {
+      x: parseFloat(grblSettings.find(s => s.id === 130)?.value ?? ''),
+      y: parseFloat(grblSettings.find(s => s.id === 131)?.value ?? ''),
+      z: parseFloat(grblSettings.find(s => s.id === 132)?.value ?? ''),
+    }
+    const violations: string[] = []
+    for (const ax of ['x', 'y', 'z'] as const) {
+      const d = deltas[ax]
+      const max = maxFor[ax]
+      if (d === undefined || !max || !isFinite(max) || max <= 0) continue
+      const predicted = mpos[ax] + d
+      if (Math.abs(predicted) > max + 0.01) {
+        violations.push(`${ax.toUpperCase()}: ${predicted.toFixed(2)}mm exceeds ±${max}mm envelope`)
+      }
+    }
+    return violations.length > 0 ? violations.join('\n') : null
+  }
+
   async function jog(axes: string) {
     if (!canJog) return
+    const violation = softLimitViolation(axes)
+    if (violation) {
+      const ok = window.confirm(
+        `Soft limit warning:\n\n${violation}\n\nProceed with this jog anyway?`
+      )
+      if (!ok) return
+    }
     if (safeZ > 0 && (axes.includes('X') || axes.includes('Y'))) {
       send(`G90 G0 Z${safeZ}`)
       await new Promise(r => setTimeout(r, 200))
