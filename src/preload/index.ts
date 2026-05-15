@@ -34,6 +34,14 @@ contextBridge.exposeInMainWorld('api', {
   dialog: {
     openFileContent: () => ipcRenderer.invoke('dialog:openFileContent'),
   },
+  updater: {
+    check: () => ipcRenderer.invoke('updater:check'),
+    install: () => ipcRenderer.invoke('updater:install'),
+    openReleasePage: () => ipcRenderer.invoke('updater:openReleasePage'),
+    getStatus: () => ipcRenderer.invoke('updater:getStatus'),
+    getVersion: () => ipcRenderer.invoke('updater:getVersion'),
+    onStatus: (cb: (s: any) => void) => on('updater:status', cb),
+  },
 })
 
 // Type declaration merged into window

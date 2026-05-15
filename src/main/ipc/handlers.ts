@@ -1,7 +1,8 @@
-import { ipcMain, dialog, BrowserWindow, WebContents } from 'electron'
+import { ipcMain, dialog, BrowserWindow, WebContents, app } from 'electron'
 import { readFile } from 'fs/promises'
 import { SerialManager } from '../serial/SerialManager'
 import { GrblStreamer } from '../serial/GrblStreamer'
+import { UpdateManager } from '../updater/UpdateManager'
 import Store from 'electron-store'
 
 export function registerIpcHandlers(
@@ -9,6 +10,7 @@ export function registerIpcHandlers(
   streamer: GrblStreamer,
   store: Store,
   win: BrowserWindow,
+  updater: UpdateManager,
 ) {
   const wc: WebContents = win.webContents
 
@@ -47,6 +49,14 @@ export function registerIpcHandlers(
   // Store
   ipcMain.handle('store:get', (_e, key: string) => store.get(key))
   ipcMain.handle('store:set', (_e, key: string, value: unknown) => store.set(key, value))
+
+  // Updater
+  updater.on('status', (s) => wc.send('updater:status', s))
+  ipcMain.handle('updater:check', () => updater.check())
+  ipcMain.handle('updater:install', () => updater.install())
+  ipcMain.handle('updater:openReleasePage', () => updater.openReleasePage())
+  ipcMain.handle('updater:getStatus', () => updater.getStatus())
+  ipcMain.handle('updater:getVersion', () => app.getVersion())
 
   // File dialog
   ipcMain.handle('dialog:openFileContent', async () => {

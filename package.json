@@ -17,6 +17,7 @@
     "@react-three/fiber": "^8.17.10",
     "@serialport/parser-readline": "^12.0.0",
     "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9",
     "lucide-react": "^0.462.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -53,6 +54,11 @@
     },
     "linux": {
       "target": "AppImage"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Tapnowater00",
+      "repo": "cnc-controller"
     }
   }
 }

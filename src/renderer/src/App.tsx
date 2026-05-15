@@ -6,6 +6,7 @@ import { useMacroStore } from './stores/macroStore'
 
 import { ConnectionBar } from './components/connection/ConnectionBar'
 import { AlarmBanner } from './components/layout/AlarmBanner'
+import { UpdateBanner } from './components/layout/UpdateBanner'
 import { QuickActions } from './components/layout/QuickActions'
 import { DROPanel } from './components/dro/DROPanel'
 import { JogControls } from './components/jog/JogControls'
@@ -161,6 +162,7 @@ export default function App() {
         onOpenSettings={() => setShowSettings(true)}
         onOpenWizard={() => setShowWizard(true)}
       />
+      <UpdateBanner />
       <AlarmBanner />
       <QuickActions onHomeConfirm={() => setShowHomeConfirm(true)} />
 

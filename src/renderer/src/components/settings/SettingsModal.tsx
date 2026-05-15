@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { X, RefreshCw, Save } from 'lucide-react'
 import { useMachineStore } from '../../stores/machineStore'
 import { useSettingsStore } from '../../stores/settingsStore'
+import { UpdateControlsRow } from '../layout/UpdateBanner'
 import type { Setting } from '../../types'
 
 const SETTING_GROUPS = ['Motion', 'Axes', 'Limits', 'Homing', 'Spindle', 'Coolant', 'Probing', 'Safety', 'Display', 'Comms', 'Other']
@@ -155,6 +156,9 @@ export function SettingsModal({ onClose }: Props) {
                 <input type="checkbox" checked={prefs.autoConnect} onChange={e => prefs.save('autoConnect', e.target.checked)} />
                 Auto-connect on startup
               </label>
+              <div className="pt-3 border-t border-zinc-800">
+                <UpdateControlsRow />
+              </div>
             </div>
           )}
 
