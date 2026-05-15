@@ -30,6 +30,10 @@ const streamer = new GrblStreamer(serial)
 const updater = new UpdateManager('Tapnowater00', 'cnc-controller')
 
 function createWindow(): BrowserWindow {
+  const iconPath = app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(__dirname, '../../build/icon.png')
+
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -37,6 +41,7 @@ function createWindow(): BrowserWindow {
     minHeight: 600,
     backgroundColor: '#09090b',
     titleBarStyle: 'default',
+    icon: iconPath,
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
