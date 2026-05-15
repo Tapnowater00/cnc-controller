@@ -18,7 +18,7 @@ export function toolpathToGcode(tp: Toolpath, op: CamOperation, tool: CamTool): 
   lines.push('G90 G21      ; absolute coordinates, metric')
   lines.push('G17          ; XY plane')
   lines.push(`S${op.spindleRPM} M3  ; spindle on CW at ${op.spindleRPM} RPM`)
-  lines.push('G4 P2        ; 2-second dwell for spindle spin-up')
+  lines.push('G4 P6        ; 6-second dwell for VFD spindle spin-up')
   lines.push('')
 
   let curX: number | undefined, curY: number | undefined, curZ: number | undefined
