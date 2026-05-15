@@ -14,10 +14,19 @@ export function registerIpcHandlers(
 ) {
   const wc: WebContents = win.webContents
 
-  // Forward all serial data to renderer AND feed ok to streamer
+  // Forward all serial data to renderer AND feed ok to streamer.
+  // Also sniff the welcome banner so the streamer can size its in-flight
+  // buffer to the firmware (127 bytes for standard grbl, 1024 for grblHAL).
   serial.on('data', (line: string) => {
     wc.send('serial:data', line)
     if (line === 'ok') streamer.onOk()
+    if (/^grblhal/i.test(line)) streamer.setFirmwareFamily('grblhal')
+    else if (/^grbl\s/i.test(line) || /^grbl\[/i.test(line)) streamer.setFirmwareFamily('grbl')
+  })
+
+  // Reset to the safe default whenever a port disconnects.
+  serial.on('connectionChange', (connected: boolean) => {
+    if (!connected) streamer.setFirmwareFamily('unknown')
   })
 
   serial.on('connectionChange', (connected: boolean) => {

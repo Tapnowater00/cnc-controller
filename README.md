@@ -1,6 +1,6 @@
 # CNC Controller
 
-A full-featured desktop application for controlling CNC machines running [grblHAL](https://github.com/grblHAL) firmware. Built with Electron, React, and TypeScript.
+A full-featured desktop application for controlling CNC machines running [grbl 1.1](https://github.com/gnea/grbl) or [grblHAL](https://github.com/grblHAL) firmware. The streaming buffer auto-tunes itself (127 bytes for standard grbl, 1024 for grblHAL) once the welcome banner is received. Built with Electron, React, and TypeScript.
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -56,7 +56,7 @@ Run the `.exe` and follow the installer. No additional software required.
 ### Extras
 - **Macro grid** — 12 programmable macros with F1–F8 keyboard shortcuts
 - **Console** — Full serial log with color coding, timestamps, command history
-- **Settings editor** — Browse and edit all grblHAL `$$` parameters in-app
+- **Settings editor** — Browse and edit all `$$` parameters in-app (grbl 1.1 / grblHAL)
 - **Keyboard shortcuts** — Arrow keys jog, Space = feed hold, R = cycle start, Esc = reset
 - **Auto-connect** — Reconnects to last port on startup
 - **Persistent settings** — Port, preferences, macros, and job history saved across sessions
@@ -107,7 +107,7 @@ npm run dist       # outputs to dist/
 
 ## Connecting to Your Machine
 
-1. Plug in your grblHAL controller via USB
+1. Plug in your grbl 1.1 or grblHAL controller via USB
 2. Select the COM port and baud rate (default 115200) in the connection bar
 3. Click **Connect**
 4. The DRO will populate and status polling begins automatically

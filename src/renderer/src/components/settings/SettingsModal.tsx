@@ -43,7 +43,7 @@ export function SettingsModal({ onClose }: Props) {
           {(['grbl', 'preferences', 'profile'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`text-sm py-2 px-3 -mb-px font-medium capitalize ${tab === t ? 'border-b-2 border-blue-500 text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}>
-              {t === 'grbl' ? 'grblHAL Settings' : t}
+              {t === 'grbl' ? 'grbl Settings' : t}
             </button>
           ))}
         </div>

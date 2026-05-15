@@ -111,8 +111,8 @@ export function SetupWizard({ onClose }: Props) {
     setApplyError(null)
 
     try {
-      // Build $N=V list. Order matters for grblHAL: homing must be enabled
-      // before soft-limits can be set.
+      // Build $N=V list. Order matters: homing must be enabled before soft
+      // limits can be set on both grbl 1.1 and grblHAL.
       const writes: string[] = [
         `$100=${cfg.stepsPerMm.x}`,
         `$101=${cfg.stepsPerMm.y}`,
@@ -259,7 +259,7 @@ function WelcomeStep() {
       <h2 className="text-lg font-semibold text-zinc-200">Configure your CNC</h2>
       <p className="text-sm text-zinc-400">
         This wizard walks you through the settings you'll typically configure once when
-        commissioning a new grblHAL controller:
+        commissioning a fresh grbl 1.1 or grblHAL controller:
       </p>
       <ul className="text-sm text-zinc-400 space-y-1.5 ml-1">
         <li className="flex gap-2"><span className="text-blue-400">•</span> Serial connection (port and baud rate)</li>
@@ -271,7 +271,7 @@ function WelcomeStep() {
       </ul>
       <p className="text-xs text-zinc-500">
         Each step has sensible defaults — you can change everything later from
-        Settings → grblHAL Settings.
+        Settings → grbl Settings.
       </p>
     </div>
   )
@@ -373,7 +373,7 @@ function ConnectStep() {
           {err}
         </div>
       )}
-      <p className="text-xs text-zinc-500">grblHAL defaults to 115200 baud.</p>
+      <p className="text-xs text-zinc-500">grbl 1.1 and grblHAL default to 115200 baud.</p>
     </div>
   )
 }
@@ -599,7 +599,7 @@ function FinishStep({ cfg, setCfg, connected, state, firmware }: {
         : 'text-green-300 bg-green-950/30 border-green-800'
       }`}>
         {!connected
-          ? 'Not connected — profile + preferences will be saved locally. Reconnect and re-run the wizard to push grblHAL settings.'
+          ? 'Not connected — profile + preferences will be saved locally. Reconnect and re-run the wizard to push the grbl settings.'
           : state === 'Alarm'
           ? `Controller is in Alarm state — clear the alarm before applying ($X) or the writes may be rejected. ${firmware}`
           : `Ready to write 12 settings to ${firmware || 'controller'}. Click Finish to apply.`}

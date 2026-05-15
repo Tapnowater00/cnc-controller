@@ -1,7 +1,8 @@
 import { EventEmitter } from 'events'
 import { SerialManager } from './SerialManager'
 
-const BUFFER_SIZE = 127
+const DEFAULT_BUFFER_SIZE = 127       // standard grbl 1.1 RX buffer
+const GRBLHAL_BUFFER_SIZE = 1024      // grblHAL RX buffer (larger)
 
 export class GrblStreamer extends EventEmitter {
   private serial: SerialManager
@@ -13,6 +14,7 @@ export class GrblStreamer extends EventEmitter {
   private startTime = 0
   private running = false
   private paused = false
+  private bufferSize = DEFAULT_BUFFER_SIZE
 
   constructor(serial: SerialManager) {
     super()
@@ -89,13 +91,17 @@ export class GrblStreamer extends EventEmitter {
       const encoded = Buffer.from(line + '\n', 'utf8')
       const len = encoded.length
 
-      if (this.inFlight + len > BUFFER_SIZE) break
+      if (this.inFlight + len > this.bufferSize) break
 
       this.queue.shift()
       this.sentQueue.push(len)
       this.inFlight += len
       this.serial.write(line)
     }
+  }
+
+  setFirmwareFamily(family: 'grbl' | 'grblhal' | 'unknown') {
+    this.bufferSize = family === 'grblhal' ? GRBLHAL_BUFFER_SIZE : DEFAULT_BUFFER_SIZE
   }
 
   get isRunning() { return this.running }
