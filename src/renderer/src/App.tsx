@@ -82,7 +82,7 @@ export default function App() {
   const { load: loadMacros } = useMacroStore()
 
   const [activeTab, setActiveTab] = useState<AppTab>('control')
-  const [showSettings, setShowSettings] = useState(false)
+  const [showSettings, setShowSettings] = useState<false | 'grbl' | 'preferences' | 'profile' | 'about'>(false)
   const [showHomeConfirm, setShowHomeConfirm] = useState(false)
   const [showWizard, setShowWizard] = useState(false)
   const [gcodeLines, setGcodeLines] = useState<string[]>([])
@@ -159,8 +159,9 @@ export default function App() {
     <div className="flex flex-col h-screen overflow-hidden text-zinc-200 bg-zinc-950">
       {/* Fixed header */}
       <ConnectionBar
-        onOpenSettings={() => setShowSettings(true)}
+        onOpenSettings={() => setShowSettings('grbl')}
         onOpenWizard={() => setShowWizard(true)}
+        onOpenAbout={() => setShowSettings('about')}
       />
       <UpdateBanner />
       <AlarmBanner />
@@ -253,7 +254,7 @@ export default function App() {
       }
 
       {/* Modals */}
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} initialTab={showSettings || 'grbl'} />}
       {showHomeConfirm && <HomeConfirmModal onConfirm={() => {}} onClose={() => setShowHomeConfirm(false)} />}
       {showWizard && <SetupWizard onClose={() => setShowWizard(false)} />}
       <ErrorToast />
