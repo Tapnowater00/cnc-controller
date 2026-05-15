@@ -11,6 +11,7 @@ interface Preferences {
   lastPort: string
   lastBaud: number
   machineProfile: MachineProfile | null
+  setupCompleted: boolean
 }
 
 interface SettingsStore extends Preferences {
@@ -30,6 +31,7 @@ const DEFAULTS: Preferences = {
   lastPort: '',
   lastBaud: 115200,
   machineProfile: null,
+  setupCompleted: false,
 }
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
@@ -54,6 +56,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         safeZ: prefs.safeZ, probeThickness: prefs.probeThickness,
         probeApproachSpeed: prefs.probeApproachSpeed, probeRetract: prefs.probeRetract,
         autoConnect: prefs.autoConnect, units: prefs.units,
+        setupCompleted: prefs.setupCompleted,
       })
     }
   },

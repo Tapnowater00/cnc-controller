@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react'
-import { Plug, PlugZap, RefreshCw, Settings } from 'lucide-react'
+import { Plug, PlugZap, RefreshCw, Settings, Wand2 } from 'lucide-react'
 import { useMachineStore } from '../../stores/machineStore'
 import { useSettingsStore } from '../../stores/settingsStore'
 import type { PortInfo } from '../../types'
 
-interface Props { onOpenSettings: () => void }
+interface Props {
+  onOpenSettings: () => void
+  onOpenWizard: () => void
+}
 
 const BAUDS = [9600, 19200, 38400, 57600, 115200, 230400, 250000]
 
-export function ConnectionBar({ onOpenSettings }: Props) {
+export function ConnectionBar({ onOpenSettings, onOpenWizard }: Props) {
   const connected = useMachineStore(s => s.connected)
   const firmware = useMachineStore(s => s.firmware)
   const state = useMachineStore(s => s.state)
@@ -113,6 +116,9 @@ export function ConnectionBar({ onOpenSettings }: Props) {
 
       <div className="flex-1" />
 
+      <button onClick={onOpenWizard} className="p-1.5 text-zinc-400 hover:text-blue-400 rounded" title="Setup Wizard">
+        <Wand2 size={16} />
+      </button>
       <button onClick={onOpenSettings} className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded" title="Settings">
         <Settings size={16} />
       </button>
