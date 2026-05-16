@@ -1,12 +1,14 @@
 {
   "name": "cnc-controller",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Full-featured grblHAL CNC Controller",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
+    "dist": "electron-vite build && electron-builder",
+    "release": "electron-vite build && electron-builder --publish always",
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
