@@ -9,7 +9,7 @@ export interface CamTool {
   notes?: string
 }
 
-export type ShapeKind = 'rect' | 'circle' | 'polyline' | 'imported'
+export type ShapeKind = 'rect' | 'circle' | 'ellipse' | 'polyline' | 'imported'
 
 export interface CamShape {
   id: string
@@ -18,7 +18,7 @@ export interface CamShape {
   points: Vec2[]   // polyline representation (circles tessellated, etc.)
   closed: boolean
   // parametric data for display/editing
-  params?: RectParams | CircleParams
+  params?: RectParams | CircleParams | EllipseParams
 }
 
 export interface RectParams {
@@ -29,6 +29,11 @@ export interface RectParams {
 export interface CircleParams {
   type: 'circle'
   cx: number; cy: number; r: number
+}
+
+export interface EllipseParams {
+  type: 'ellipse'
+  cx: number; cy: number; rx: number; ry: number
 }
 
 export type OperationType = 'profile' | 'pocket' | 'drill' | 'engrave'

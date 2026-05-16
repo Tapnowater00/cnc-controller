@@ -112,7 +112,12 @@ export function parseGcode(lines: string[]): Segment[] {
     }
 
     if (motionCode === 0 || motionCode === 1) {
-      segments.push({ type: motionCode === 0 ? 'rapid' : 'cut', start: { ...pos }, end: { ...target } })
+      const isCut = motionCode === 1
+      segments.push({
+        type: isCut ? 'cut' : 'rapid',
+        start: { ...pos }, end: { ...target },
+        feed: isCut ? modal.feed : undefined,
+      })
       pos = target
     } else if (motionCode === 2 || motionCode === 3) {
       const center: Vec3 = {
@@ -123,7 +128,7 @@ export function parseGcode(lines: string[]): Segment[] {
       const arcPoints = arcToSegments(pos, target, center, motionCode === 2, modal.plane)
       let prev = pos
       for (const pt of arcPoints) {
-        segments.push({ type: 'cut', start: { ...prev }, end: { ...pt } })
+        segments.push({ type: 'cut', start: { ...prev }, end: { ...pt }, feed: modal.feed })
         prev = pt
       }
       pos = target

@@ -17,17 +17,37 @@ const ALARM_CODES: Record<number, string> = {
   12: 'Limit switch engaged — clear before continuing',
 }
 
+// Standard grbl 1.1 error codes 1-30 (also valid on grblHAL). Anything
+// unrecognised falls back to "Error N" so newer firmwares still parse.
 const ERROR_CODES: Record<number, string> = {
   1: 'G-code words consist of a letter and a value',
   2: 'Numeric value format is not valid or missing',
-  3: 'Grbl $ not recognized or supported',
-  4: 'Negative value for expected positive value',
-  5: 'Homing cycle failure',
-  8: 'Grbl $ command cannot be used unless idle',
-  9: 'G-code locked during alarm state',
+  3: '$ system command was not recognized or supported',
+  4: 'Negative value received for an expected positive value',
+  5: 'Homing cycle is not enabled via settings',
+  6: 'Minimum step pulse time must be greater than 3µs',
+  7: 'EEPROM read failed — reset and restored to defaults',
+  8: '$ command cannot be used unless controller is Idle',
+  9: 'G-code locked out during alarm or jog state',
+  10: 'Soft limits cannot be enabled without homing also enabled',
+  11: 'Max characters per line exceeded',
+  12: '$ setting value exceeds the maximum step rate supported',
+  13: 'Safety door opened — door state initiated',
+  14: 'Build info or startup line exceeded EEPROM length limit',
   15: 'Jog target exceeds machine travel',
+  16: 'Jog command missing "=" or contains prohibited G-code',
+  17: 'Laser mode requires PWM output',
   20: 'Unsupported or invalid G-code command',
-  22: 'Feed rate has not yet been set',
+  21: 'More than one G-code command from the same modal group',
+  22: 'Feed rate has not yet been set or is undefined',
+  23: 'G-code command requires an integer value',
+  24: 'Two G-code commands both requiring XYZ axis words',
+  25: 'A G-code word was repeated in the block',
+  26: 'G-code requires XYZ axis words but none were detected',
+  27: 'N line number is not within 1–9,999,999',
+  28: 'Missing required P or L value word',
+  29: 'G59.1, G59.2, G59.3 are not supported',
+  30: 'G53 requires G0 or G1 motion mode to be active',
 }
 
 function parseVec3(s: string): Vec3 {
@@ -99,6 +119,7 @@ interface MachineStore {
   activeWCS: WCSName
   units: 'mm' | 'inch'
   firmware: string
+  firmwareFamily: 'grbl' | 'grblhal' | 'unknown'
   // Streaming
   streaming: boolean
   streamingFile: string
@@ -151,6 +172,7 @@ export const useMachineStore = create<MachineStore>((set, get) => ({
   activeWCS: 'G54',
   units: 'mm',
   firmware: '',
+  firmwareFamily: 'unknown',
   streaming: false,
   streamingFile: '',
   streamingProgress: 0,
@@ -241,10 +263,13 @@ export const useMachineStore = create<MachineStore>((set, get) => ({
       }
     }
 
-    // grblHAL welcome / build info
+    // Welcome / build info — supports both standard grbl 1.1 and grblHAL.
     if (line.startsWith('Grbl') || line.startsWith('GrblHAL') || line.startsWith('[MSG:')) {
       if (!get().firmware && (line.startsWith('Grbl') || line.startsWith('GrblHAL'))) {
-        set({ firmware: line.split(' ')[1] ?? line })
+        set({
+          firmware: line.split(' ')[1] ?? line,
+          firmwareFamily: /grblhal/i.test(line) ? 'grblhal' : 'grbl',
+        })
       }
     }
   },

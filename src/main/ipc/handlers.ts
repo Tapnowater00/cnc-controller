@@ -1,7 +1,8 @@
-import { ipcMain, dialog, BrowserWindow, WebContents } from 'electron'
+import { ipcMain, dialog, BrowserWindow, WebContents, app } from 'electron'
 import { readFile } from 'fs/promises'
 import { SerialManager } from '../serial/SerialManager'
 import { GrblStreamer } from '../serial/GrblStreamer'
+import { UpdateManager } from '../updater/UpdateManager'
 import Store from 'electron-store'
 
 export function registerIpcHandlers(
@@ -9,13 +10,23 @@ export function registerIpcHandlers(
   streamer: GrblStreamer,
   store: Store,
   win: BrowserWindow,
+  updater: UpdateManager,
 ) {
   const wc: WebContents = win.webContents
 
-  // Forward all serial data to renderer AND feed ok to streamer
+  // Forward all serial data to renderer AND feed ok to streamer.
+  // Also sniff the welcome banner so the streamer can size its in-flight
+  // buffer to the firmware (127 bytes for standard grbl, 1024 for grblHAL).
   serial.on('data', (line: string) => {
     wc.send('serial:data', line)
     if (line === 'ok') streamer.onOk()
+    if (/^grblhal/i.test(line)) streamer.setFirmwareFamily('grblhal')
+    else if (/^grbl\s/i.test(line) || /^grbl\[/i.test(line)) streamer.setFirmwareFamily('grbl')
+  })
+
+  // Reset to the safe default whenever a port disconnects.
+  serial.on('connectionChange', (connected: boolean) => {
+    if (!connected) streamer.setFirmwareFamily('unknown')
   })
 
   serial.on('connectionChange', (connected: boolean) => {
@@ -47,6 +58,14 @@ export function registerIpcHandlers(
   // Store
   ipcMain.handle('store:get', (_e, key: string) => store.get(key))
   ipcMain.handle('store:set', (_e, key: string, value: unknown) => store.set(key, value))
+
+  // Updater
+  updater.on('status', (s) => wc.send('updater:status', s))
+  ipcMain.handle('updater:check', () => updater.check())
+  ipcMain.handle('updater:install', () => updater.install())
+  ipcMain.handle('updater:openReleasePage', () => updater.openReleasePage())
+  ipcMain.handle('updater:getStatus', () => updater.getStatus())
+  ipcMain.handle('updater:getVersion', () => app.getVersion())
 
   // File dialog
   ipcMain.handle('dialog:openFileContent', async () => {

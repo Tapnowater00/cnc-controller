@@ -50,9 +50,11 @@ export function generateToolpath(op: CamOperation, shape: CamShape, tool: CamToo
   const stepOver = op.stepOver * tool.diameter
   const passes = numPasses(op)
 
-  // Helper — rapid to XY then plunge
+  // Helper — retract Z, traverse to XY at safeZ, then plunge.
+  // Splitting retract and traverse prevents dragging the tool through stock when G0
+  // moves are coordinated rather than sequential on the controller.
   function plungeTo(x: number, y: number, z: number) {
-    moves.push({ type: 'rapid', x, y, z: op.safeZ })
+    moves.push({ type: 'rapid', z: op.safeZ })
     moves.push({ type: 'rapid', x, y, z: op.safeZ })
     moves.push({ type: 'plunge', x, y, z, f: op.plungeRate })
   }

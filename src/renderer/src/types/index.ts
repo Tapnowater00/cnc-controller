@@ -72,6 +72,7 @@ export interface Segment {
   type: 'rapid' | 'cut'
   start: Vec3
   end: Vec3
+  feed?: number  // mm/min, only set for cut segments
 }
 
 export type WCSName = 'G54' | 'G55' | 'G56' | 'G57' | 'G58' | 'G59'

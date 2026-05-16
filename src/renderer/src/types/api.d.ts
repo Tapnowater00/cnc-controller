@@ -1,5 +1,15 @@
 import type { PortInfo, StreamProgress } from './index'
 
+export type UpdateStatus =
+  | { state: 'idle' }
+  | { state: 'checking' }
+  | { state: 'available'; version: string }
+  | { state: 'downloading'; percent: number; version: string }
+  | { state: 'ready'; version: string }
+  | { state: 'fallback'; version: string; releaseUrl: string }
+  | { state: 'up-to-date' }
+  | { state: 'error'; message: string }
+
 interface Api {
   serial: {
     listPorts(): Promise<PortInfo[]>
@@ -27,6 +37,14 @@ interface Api {
   }
   dialog: {
     openFileContent(): Promise<{ path: string; content: string } | null>
+  }
+  updater: {
+    check(): Promise<void>
+    install(): Promise<void>
+    openReleasePage(): Promise<void>
+    getStatus(): Promise<UpdateStatus>
+    getVersion(): Promise<string>
+    onStatus(cb: (s: UpdateStatus) => void): () => void
   }
 }
 

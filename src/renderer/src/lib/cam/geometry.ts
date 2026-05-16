@@ -58,6 +58,16 @@ export function tessellateCircle(cx: number, cy: number, r: number, segs = 64): 
   return pts
 }
 
+// Tessellate an ellipse to polyline
+export function tessellateEllipse(cx: number, cy: number, rx: number, ry: number, segs = 64): Vec2[] {
+  const pts: Vec2[] = []
+  for (let i = 0; i < segs; i++) {
+    const a = (i / segs) * Math.PI * 2
+    pts.push({ x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) })
+  }
+  return pts
+}
+
 // Tessellate an arc (angles in radians, CCW from startAngle to endAngle)
 export function tessellateArc(cx: number, cy: number, r: number,
   startAngle: number, endAngle: number, ccw: boolean, segs = 32): Vec2[] {

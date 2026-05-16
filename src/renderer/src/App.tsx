@@ -6,6 +6,7 @@ import { useMacroStore } from './stores/macroStore'
 
 import { ConnectionBar } from './components/connection/ConnectionBar'
 import { AlarmBanner } from './components/layout/AlarmBanner'
+import { UpdateBanner } from './components/layout/UpdateBanner'
 import { QuickActions } from './components/layout/QuickActions'
 import { DROPanel } from './components/dro/DROPanel'
 import { JogControls } from './components/jog/JogControls'
@@ -19,6 +20,7 @@ import { MacroPanel } from './components/macros/MacroPanel'
 import { ConsolePanel } from './components/console/ConsolePanel'
 import { SettingsModal } from './components/settings/SettingsModal'
 import { CamWorkspace } from './components/cam/CamWorkspace'
+import { SetupWizard } from './components/setup/SetupWizard'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
 type AppTab = 'control' | 'cam'
@@ -80,8 +82,9 @@ export default function App() {
   const { load: loadMacros } = useMacroStore()
 
   const [activeTab, setActiveTab] = useState<AppTab>('control')
-  const [showSettings, setShowSettings] = useState(false)
+  const [showSettings, setShowSettings] = useState<false | 'grbl' | 'preferences' | 'profile' | 'about'>(false)
   const [showHomeConfirm, setShowHomeConfirm] = useState(false)
+  const [showWizard, setShowWizard] = useState(false)
   const [gcodeLines, setGcodeLines] = useState<string[]>([])
   const [stepIdx, setStepIdx] = useState(3)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -125,6 +128,11 @@ export default function App() {
     }
   }, [settings.loaded])
 
+  // First-run: open the setup wizard once preferences have loaded
+  useEffect(() => {
+    if (settings.loaded && !settings.setupCompleted) setShowWizard(true)
+  }, [settings.loaded])
+
   // Listen for CAM-generated G-code → load into sender and switch to control tab
   useEffect(() => {
     const handler = (e: Event) => {
@@ -150,7 +158,12 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen overflow-hidden text-zinc-200 bg-zinc-950">
       {/* Fixed header */}
-      <ConnectionBar onOpenSettings={() => setShowSettings(true)} />
+      <ConnectionBar
+        onOpenSettings={() => setShowSettings('grbl')}
+        onOpenWizard={() => setShowWizard(true)}
+        onOpenAbout={() => setShowSettings('about')}
+      />
+      <UpdateBanner />
       <AlarmBanner />
       <QuickActions onHomeConfirm={() => setShowHomeConfirm(true)} />
 
@@ -241,8 +254,9 @@ export default function App() {
       }
 
       {/* Modals */}
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} initialTab={showSettings || 'grbl'} />}
       {showHomeConfirm && <HomeConfirmModal onConfirm={() => {}} onClose={() => setShowHomeConfirm(false)} />}
+      {showWizard && <SetupWizard onClose={() => setShowWizard(false)} />}
       <ErrorToast />
     </div>
   )

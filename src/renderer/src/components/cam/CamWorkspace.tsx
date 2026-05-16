@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react'
 import {
   MousePointer2, Square, Circle, Minus, Trash2, Download, Play,
-  Plus, ChevronDown, ChevronRight, Layers, Wrench, Calculator, Upload, X
+  Plus, ChevronDown, ChevronRight, Layers, Wrench, Calculator, Upload, X,
+  Undo2, Redo2, Egg
 } from 'lucide-react'
 import { useCamStore, defaultOperation } from '../../stores/camStore'
 import { CamCanvas, DrawTool } from './CamCanvas'
@@ -26,7 +27,8 @@ export function CamWorkspace() {
   const {
     shapes, operations, tools, selectedShapeIds, selectedOpId,
     addOperation, deleteOperation, setSelectedOp, setSelectedShapes,
-    deleteShape, setGeneratedGcode, generatedGcode, clearShapes, addShapes
+    deleteShape, setGeneratedGcode, generatedGcode, clearShapes, addShapes,
+    undo, redo, past, future,
   } = useCamStore()
 
   const [drawTool, setDrawTool] = useState<DrawTool>('select')
@@ -128,9 +130,18 @@ export function CamWorkspace() {
         {/* Draw tools */}
         <div className="p-2 border-b border-zinc-800 flex flex-wrap gap-1">
           {drawToolBtn('select', <MousePointer2 size={14} />, 'Select (S)')}
-          {drawToolBtn('rect', <Square size={14} />, 'Rectangle (R)')}
-          {drawToolBtn('circle', <Circle size={14} />, 'Circle (C)')}
-          {drawToolBtn('polyline', <Minus size={14} />, 'Polyline (P)')}
+          {drawToolBtn('rect', <Square size={14} />, 'Rectangle · Shift = square')}
+          {drawToolBtn('circle', <Circle size={14} />, 'Circle · drag radius from center')}
+          {drawToolBtn('ellipse', <Egg size={14} />, 'Ellipse · drag bbox · Shift = circle')}
+          {drawToolBtn('polyline', <Minus size={14} />, 'Polyline · dbl-click to finish')}
+          <button title="Undo (Ctrl+Z)" onClick={undo} disabled={past.length === 0}
+            className="p-1.5 rounded bg-zinc-800 text-zinc-400 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed">
+            <Undo2 size={14} />
+          </button>
+          <button title="Redo (Ctrl+Shift+Z)" onClick={redo} disabled={future.length === 0}
+            className="p-1.5 rounded bg-zinc-800 text-zinc-400 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed">
+            <Redo2 size={14} />
+          </button>
           <button title="Import SVG/DXF" onClick={handleImport}
             className="p-1.5 rounded bg-zinc-800 text-zinc-400 hover:bg-zinc-700">
             <Upload size={14} />
@@ -267,7 +278,7 @@ export function CamWorkspace() {
         />
         {/* Canvas hint */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 text-zinc-600 pointer-events-none select-none text-xs">
-          Scroll to zoom · Alt+drag to pan · Dbl-click to finish polyline · Del to delete selected
+          Scroll: zoom · Alt+drag: pan · Ctrl+Z / Ctrl+Shift+Z: undo/redo · Ctrl+A: all · Ctrl+D: duplicate · arrows: nudge
         </div>
       </div>
 

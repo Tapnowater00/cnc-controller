@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react'
-import { Plug, PlugZap, RefreshCw, Settings } from 'lucide-react'
+import { Plug, PlugZap, RefreshCw, Settings, Wand2, Download } from 'lucide-react'
 import { useMachineStore } from '../../stores/machineStore'
 import { useSettingsStore } from '../../stores/settingsStore'
 import type { PortInfo } from '../../types'
+import type { UpdateStatus } from '../../types/api'
 
-interface Props { onOpenSettings: () => void }
+interface Props {
+  onOpenSettings: () => void
+  onOpenWizard: () => void
+  onOpenAbout?: () => void
+}
 
 const BAUDS = [9600, 19200, 38400, 57600, 115200, 230400, 250000]
 
-export function ConnectionBar({ onOpenSettings }: Props) {
+export function ConnectionBar({ onOpenSettings, onOpenWizard, onOpenAbout }: Props) {
   const connected = useMachineStore(s => s.connected)
   const firmware = useMachineStore(s => s.firmware)
   const state = useMachineStore(s => s.state)
@@ -19,8 +24,16 @@ export function ConnectionBar({ onOpenSettings }: Props) {
   const [baud, setBaud] = useState(lastBaud)
   const [connecting, setConnecting] = useState(false)
   const [reconnecting, setReconnecting] = useState(false)
+  const [version, setVersion] = useState('')
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ state: 'idle' })
 
   useEffect(() => { refreshPorts() }, [])
+  useEffect(() => {
+    window.api.updater.getVersion().then(setVersion)
+    window.api.updater.getStatus().then(s => s && setUpdateStatus(s))
+    const unsub = window.api.updater.onStatus(setUpdateStatus)
+    return unsub
+  }, [])
   useEffect(() => { if (lastPort && !port) setPort(lastPort) }, [lastPort])
   useEffect(() => {
     if (!connected && !connecting) setReconnecting(false)
@@ -113,6 +126,34 @@ export function ConnectionBar({ onOpenSettings }: Props) {
 
       <div className="flex-1" />
 
+      {/* Version + update affordance — always visible so users can find updates */}
+      {(() => {
+        const hasUpdate = updateStatus.state === 'available' || updateStatus.state === 'downloading'
+          || updateStatus.state === 'ready' || updateStatus.state === 'fallback'
+        const updateLabel =
+          updateStatus.state === 'ready' ? 'Update ready' :
+          updateStatus.state === 'downloading' ? `Downloading ${updateStatus.percent}%` :
+          updateStatus.state === 'available' ? 'Update available' :
+          updateStatus.state === 'fallback' ? 'Update available' : ''
+        return (
+          <button
+            onClick={onOpenAbout}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-mono transition-colors ${
+              hasUpdate
+                ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+            }`}
+            title={hasUpdate ? updateLabel : 'Click to check for updates'}
+          >
+            {hasUpdate && <Download size={12} />}
+            <span>{hasUpdate ? updateLabel : `v${version || '…'}`}</span>
+          </button>
+        )
+      })()}
+
+      <button onClick={onOpenWizard} className="p-1.5 text-zinc-400 hover:text-blue-400 rounded" title="Setup Wizard">
+        <Wand2 size={16} />
+      </button>
       <button onClick={onOpenSettings} className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded" title="Settings">
         <Settings size={16} />
       </button>
