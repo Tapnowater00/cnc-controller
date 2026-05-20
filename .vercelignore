@@ -1,0 +1,12 @@
+node_modules/
+dist/
+out/
+dist-electron/
+.vite/
+*.log
+.env
+.env.local
+bridge/
+src/main/
+src/preload/
+electron.vite.config.ts
