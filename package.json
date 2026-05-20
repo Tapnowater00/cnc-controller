@@ -9,7 +9,10 @@
     "preview": "electron-vite preview",
     "dist": "electron-vite build && electron-builder",
     "release": "electron-vite build && electron-builder --publish always",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "build:web": "vite build --config vite.web.config.mts",
+    "bridge:dev": "tsx watch bridge/server.ts",
+    "bridge:start": "tsx bridge/server.ts"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
@@ -26,6 +29,7 @@
     "react-resizable-panels": "^2.1.7",
     "serialport": "^12.0.0",
     "three": "^0.170.0",
+    "ws": "^8.18.0",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
@@ -34,11 +38,13 @@
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@types/three": "^0.170.0",
+    "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
     "electron-vite": "^2.3.0",
     "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vite": "^5.4.0"
   },
@@ -46,7 +52,8 @@
     "appId": "com.cnccontroller.app",
     "productName": "CNC Controller",
     "files": [
-      "out/**/*"
+      "out/**/*",
+      "node_modules/**/*"
     ],
     "extraResources": [
       { "from": "build/icon.png", "to": "icon.png" }
