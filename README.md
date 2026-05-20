@@ -114,6 +114,106 @@ npm run dist       # outputs to dist/
 
 ---
 
+## iPad / Web Client (Raspberry Pi 5 bridge)
+
+You can run the same UI on an iPad (or any tablet / laptop browser) by hosting
+the web build on a Raspberry Pi 5 that sits next to the CNC. The Pi handles
+the USB serial connection to grblHAL; the iPad is a thin client over Wi‑Fi.
+
+### Build
+
+```bash
+npm install
+npm run build:pi     # builds out/web (static UI) and out/server (Node bridge)
+```
+
+Copy `out/` and `package.json` to the Pi (or `git clone` and build there — a
+Pi 5 builds the whole thing in well under a minute).
+
+### Run on the Pi
+
+```bash
+# First launch only: seed the shared password (hashed into data/store.json).
+CNC_PASSWORD='choose-a-strong-password' npm run start:server
+
+# Subsequent launches:
+npm run start:server
+```
+
+Defaults: listens on `0.0.0.0:8080`, stores settings in `./data/store.json`,
+serves the web UI from `out/web/`. Override with env vars:
+
+| Variable | Default | Notes |
+|---|---|---|
+| `PORT` | `8080` | HTTP(S) + WebSocket port |
+| `HOST` | `0.0.0.0` | Bind address |
+| `STORE_PATH` | `./data/store.json` | Settings, macros, job history, hashed password |
+| `STATIC_DIR` | `out/web` (next to the bundle) | Built renderer to serve |
+| `TLS_CERT`, `TLS_KEY` | _(unset)_ | If both point to existing files, the server speaks HTTPS instead of HTTP |
+| `CNC_PASSWORD` | _(unset)_ | Required only on the very first launch to seed the password hash |
+
+Run it under `systemd` so it survives reboots:
+
+```ini
+# /etc/systemd/system/cnc-controller.service
+[Unit]
+Description=CNC Controller (grblHAL web bridge)
+After=network-online.target
+
+[Service]
+WorkingDirectory=/home/pi/cnc-controller
+Environment=PORT=8080
+ExecStart=/usr/bin/npm run start:server
+Restart=on-failure
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now cnc-controller
+```
+
+### Open it on the iPad
+
+1. On the Pi, find the LAN address: `hostname -I`
+2. On the iPad, open Safari → `http://<pi-ip>:8080` (or `https://` if TLS is on)
+3. Enter the password — Safari remembers it via the bearer token in `localStorage`
+4. Share menu → **Add to Home Screen** for a fullscreen, app-like icon
+
+### Reachable from anywhere
+
+The server's password + bearer-token auth runs everywhere, but for real
+remote access you also need TLS. Two reasonable paths:
+
+- **Easy (recommended)** — install [Tailscale](https://tailscale.com/) on the
+  Pi and the iPad. They get private IPs over an encrypted mesh and you connect
+  to `http://<pi-tailscale-name>:8080` from anywhere as if you were on the LAN.
+  No port forwarding, no certificate management.
+- **Direct exposure** — point a domain at your home IP, forward port 443 to
+  the Pi, and run [Caddy](https://caddyserver.com/) or `nginx` in front for
+  automatic Let's Encrypt certificates and reverse-proxy to `localhost:8080`.
+  Alternatively, set `TLS_CERT` and `TLS_KEY` on the server itself.
+
+Either way, never expose the Pi over plain HTTP outside the LAN — the bearer
+token would travel in clear text.
+
+### Dev workflow
+
+```bash
+# In one terminal: backend
+CNC_PASSWORD=dev npm run dev:server
+
+# In another: Vite dev server with HMR for the renderer
+npm run dev:web
+```
+
+Then browse to `http://localhost:5174`. Vite proxies `/api` and `/ws` to the
+backend, so login + WebSocket Just Work.
+
+---
+
 ## License
 
 MIT
