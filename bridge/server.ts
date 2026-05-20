@@ -10,8 +10,11 @@ import { SerialManager } from '../src/main/serial/SerialManager'
 import { GrblStreamer } from '../src/main/serial/GrblStreamer'
 
 const PORT = Number(process.env.PORT ?? 3001)
-const STATIC_DIR = path.join(__dirname, '..', 'dist', 'web')
-const STORE_PATH = path.join(__dirname, '..', '.bridge-store.json')
+const ROOT = path.resolve(__dirname, '..')
+const STATIC_DIR = existsSync(path.join(ROOT, 'dist', 'web'))
+  ? path.join(ROOT, 'dist', 'web')
+  : path.join(ROOT, 'out', 'web')
+const STORE_PATH = path.join(ROOT, '.bridge-store.json')
 
 // ── Simple file-backed key-value store ────────────────────────────────────────
 

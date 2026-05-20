@@ -11,8 +11,8 @@
     "release": "electron-vite build && electron-builder --publish always",
     "postinstall": "electron-builder install-app-deps",
     "build:web": "vite build --config vite.web.config.mts",
-    "bridge:dev": "tsx watch bridge/server.ts",
-    "bridge:start": "tsx bridge/server.ts"
+    "bridge:dev": "npx tsx watch bridge/server.ts",
+    "bridge:start": "npx tsx bridge/server.ts"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
