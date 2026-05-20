@@ -202,7 +202,7 @@ export function CamWorkspace() {
         </div>
 
         {/* Operations list */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           <button onClick={() => setOpsOpen(v => !v)}
             className="w-full flex items-center gap-1 px-2 py-1.5 hover:bg-zinc-800/50 flex-shrink-0">
             {opsOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}

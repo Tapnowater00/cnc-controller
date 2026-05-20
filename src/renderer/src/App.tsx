@@ -156,7 +156,7 @@ export default function App() {
   )
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden text-zinc-200 bg-zinc-950">
+    <div className="flex flex-col h-[100dvh] overflow-hidden text-zinc-200 bg-zinc-950">
       {/* Fixed header */}
       <ConnectionBar
         onOpenSettings={() => setShowSettings('grbl')}
