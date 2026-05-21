@@ -194,10 +194,12 @@ function installWebSerialApi(): void {
 // ── WebSocket bridge shim ─────────────────────────────────────────────────────
 
 function installWebSocketApi(wsUrl: string): Promise<void> {
-  return new Promise((resolveReady, rejectReady) => {
-    const ws = new WebSocket(wsUrl)
+  return new Promise((resolveReady) => {
+    let ws: WebSocket | null = null
+    let wsReady = false
     const pending = new Map<string, { resolve: (v: any) => void; reject: (e: any) => void }>()
     const listeners = new Map<string, Set<(data: any) => void>>()
+    let reconnectDelay = 1000
 
     function on(ch: string, cb: (data: any) => void): () => void {
       if (!listeners.has(ch)) listeners.set(ch, new Set())
@@ -207,16 +209,17 @@ function installWebSocketApi(wsUrl: string): Promise<void> {
 
     function invoke(channel: string, ...args: any[]): Promise<any> {
       return new Promise((resolve, reject) => {
+        if (!wsReady || !ws) {
+          reject(new Error('Bridge not connected'))
+          return
+        }
         const id = Math.random().toString(36).slice(2)
         pending.set(id, { resolve, reject })
         ws.send(JSON.stringify({ id, type: 'invoke', channel, args }))
       })
     }
 
-    ws.onopen = () => resolveReady()
-    ws.onerror = () => rejectReady(new Error('Bridge WebSocket failed — is the CNC Bridge running?'))
-
-    ws.onmessage = (event: MessageEvent) => {
+    function handleMessage(event: MessageEvent) {
       let msg: any
       try { msg = JSON.parse(event.data) } catch { return }
       if (msg.type === 'response') {
@@ -229,6 +232,39 @@ function installWebSocketApi(wsUrl: string): Promise<void> {
         listeners.get(msg.channel)?.forEach(cb => cb(msg.data))
       }
     }
+
+    function connect() {
+      try {
+        ws = new WebSocket(wsUrl)
+      } catch {
+        scheduleReconnect()
+        return
+      }
+      ws.onopen = () => {
+        wsReady = true
+        reconnectDelay = 1000
+      }
+      ws.onmessage = handleMessage
+      ws.onerror = () => { /* error → close fires next */ }
+      ws.onclose = () => {
+        wsReady = false
+        // Reject any in-flight invokes so callers see a clear failure
+        for (const [, p] of pending) p.reject(new Error('Bridge connection lost'))
+        pending.clear()
+        // Tell listeners the serial connection is gone
+        listeners.get('serial:connectionChange')?.forEach(cb => cb(false))
+        scheduleReconnect()
+      }
+    }
+
+    function scheduleReconnect() {
+      setTimeout(connect, reconnectDelay)
+      reconnectDelay = Math.min(reconnectDelay * 2, 15000)
+    }
+
+    connect()
+    // Resolve immediately so the UI can render even if the bridge is unreachable.
+    resolveReady()
 
     // File dialog must live in the browser regardless of bridge mode
     function openFileContent(): Promise<{ path: string; content: string } | null> {

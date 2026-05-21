@@ -66,7 +66,7 @@ export function ConnectionBar({ onOpenSettings, onOpenWizard, onOpenAbout }: Pro
   const stateColor = connected ? (state === 'Alarm' ? 'bg-red-500' : state === 'Run' || state === 'Jog' ? 'bg-blue-500' : state === 'Hold' ? 'bg-yellow-500' : 'bg-green-500') : 'bg-zinc-600'
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border-b border-zinc-800 flex-shrink-0">
+    <div className="flex flex-wrap items-center gap-2 px-3 py-2 bg-zinc-900 border-b border-zinc-800 flex-shrink-0">
       {/* Port refresh + selector */}
       <button onClick={refreshPorts} className="p-1 text-zinc-400 hover:text-zinc-200" title="Refresh ports">
         <RefreshCw size={14} />
