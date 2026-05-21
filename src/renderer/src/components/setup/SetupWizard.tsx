@@ -169,8 +169,8 @@ export function SetupWizard({ onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl w-[760px] max-h-[88vh] flex flex-col shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-2 sm:p-4">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-xl w-full max-w-[760px] max-h-[90dvh] flex flex-col shadow-2xl">
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800 flex-shrink-0">

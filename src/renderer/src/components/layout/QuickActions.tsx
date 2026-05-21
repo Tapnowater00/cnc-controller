@@ -19,7 +19,7 @@ export function QuickActions({ onHomeConfirm }: Props) {
   const canReset = connected
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/50 border-b border-zinc-800 flex-shrink-0">
+    <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 bg-zinc-900/50 border-b border-zinc-800 flex-shrink-0">
       <button
         onClick={() => sendRealtime(RT_FEED_HOLD)}
         disabled={!canFeedHold}
@@ -59,7 +59,7 @@ export function QuickActions({ onHomeConfirm }: Props) {
       </button>
 
       <div className="flex-1" />
-      <span className="text-xs text-zinc-600">Space=Hold · R=Start · Esc=Reset · H=Home</span>
+      <span className="hidden lg:inline text-xs text-zinc-600">Space=Hold · R=Start · Esc=Reset · H=Home</span>
     </div>
   )
 }

@@ -24,6 +24,24 @@ html, body, #root {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 13px;
   overflow: hidden;
+  /* Honor iOS safe areas so notch / home indicator don't overlap content */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile / tablet: allow the page itself to scroll vertically. The desktop
+   layout uses fixed-height resizable panels that cannot fit on small screens. */
+@media (max-width: 1023px) {
+  html, body, #root { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+  /* Avoid iOS Safari zooming on focused inputs by ensuring 16px font. */
+  input, select, textarea { font-size: 16px; }
+}
+
+/* Touch devices get larger hit targets without changing desktop look */
+@media (hover: none) and (pointer: coarse) {
+  button, [role="button"], select { min-height: 32px; }
 }
 
 /* Scrollbar styling */

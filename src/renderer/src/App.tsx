@@ -39,6 +39,22 @@ function ScrollSection({ children }: { children: React.ReactNode }) {
   return <div className="overflow-y-auto flex-1">{children}</div>
 }
 
+// Track viewport width so we can swap to a stacked layout on phones / iPad portrait.
+// react-resizable-panels uses fixed % min sizes that won't fit on narrow screens.
+function useIsCompact(): boolean {
+  const query = '(max-width: 1023px)'
+  const [compact, setCompact] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia(query).matches
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const handler = (e: MediaQueryListEvent) => setCompact(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return compact
+}
+
 function HomeConfirmModal({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
   const send = useMachineStore(s => s.send)
   return (
@@ -88,6 +104,7 @@ export default function App() {
   const [gcodeLines, setGcodeLines] = useState<string[]>([])
   const [stepIdx, setStepIdx] = useState(3)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isCompact = useIsCompact()
 
   useKeyboardShortcuts({
     onHomeConfirm: () => setShowHomeConfirm(true),
@@ -156,7 +173,7 @@ export default function App() {
   )
 
   return (
-    <div className="flex flex-col h-[100dvh] overflow-hidden text-zinc-200 bg-zinc-950">
+    <div className={`flex flex-col text-zinc-200 bg-zinc-950 ${isCompact ? 'min-h-[100dvh]' : 'h-[100dvh] overflow-hidden'}`}>
       {/* Fixed header */}
       <ConnectionBar
         onOpenSettings={() => setShowSettings('grbl')}
@@ -183,75 +200,104 @@ export default function App() {
 
       {/* CAM workspace */}
       {activeTab === 'cam' && (
-        <div className="flex-1 overflow-hidden">
+        <div className={isCompact ? 'h-[75vh]' : 'flex-1 overflow-hidden'}>
           <CamWorkspace />
         </div>
       )}
 
-      {/* Control layout */}
-      {activeTab === 'control' && <div className="flex-1 overflow-hidden">
-        <PanelGroup direction="horizontal" className="h-full">
-          {/* LEFT column */}
-          <Panel defaultSize={22} minSize={18} maxSize={30} className="flex flex-col bg-zinc-950 border-r border-zinc-800 overflow-hidden">
-            <DROPanel />
-            <SectionHeader title="Jog" />
-            <JogControls onHomeConfirm={() => setShowHomeConfirm(true)} />
-            <SectionHeader title="Overrides" />
-            <OverrideControls />
-            <div className="flex-1" />
-          </Panel>
+      {/* Control layout — desktop: 3-column resizable panels.
+                          compact (phone / iPad portrait): stacked, page scrolls. */}
+      {activeTab === 'control' && (isCompact ? (
+        <div className="flex flex-col">
+          <DROPanel />
+          <SectionHeader title="Jog" />
+          <JogControls onHomeConfirm={() => setShowHomeConfirm(true)} />
+          <SectionHeader title="Overrides" />
+          <OverrideControls />
+          <SectionHeader title="3D Visualizer" />
+          <div className="h-[300px] border-b border-zinc-800">
+            <Visualizer3D gcodeLines={gcodeLines} />
+          </div>
+          <SectionHeader title="G-code Sender" accent />
+          <div className="h-[420px] flex flex-col border-b border-zinc-800">
+            <GcodeSender onFileLoaded={setGcodeLines} externalLines={gcodeLines} />
+          </div>
+          <SectionHeader title="Work Coordinates" />
+          <WorkCoordinates />
+          <SectionHeader title="Spindle & Coolant" />
+          <SpindleCoolant />
+          <SectionHeader title="Probe Routines" />
+          <ProbeRoutines />
+          <SectionHeader title="Macros" />
+          <MacroPanel />
+          <div className="h-[320px] flex flex-col border-t border-zinc-800">
+            <ConsolePanel />
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-hidden">
+          <PanelGroup direction="horizontal" className="h-full">
+            {/* LEFT column */}
+            <Panel defaultSize={22} minSize={18} maxSize={30} className="flex flex-col bg-zinc-950 border-r border-zinc-800 overflow-hidden">
+              <DROPanel />
+              <SectionHeader title="Jog" />
+              <JogControls onHomeConfirm={() => setShowHomeConfirm(true)} />
+              <SectionHeader title="Overrides" />
+              <OverrideControls />
+              <div className="flex-1" />
+            </Panel>
 
-          {divider()}
+            {divider()}
 
-          {/* CENTER column */}
-          <Panel defaultSize={44} minSize={30} className="flex flex-col overflow-hidden">
-            <PanelGroup direction="vertical" className="h-full">
-              <Panel defaultSize={55} minSize={30}>
-                <Visualizer3D gcodeLines={gcodeLines} />
-              </Panel>
-              {divider('horizontal')}
-              <Panel defaultSize={45} minSize={25} className="flex flex-col overflow-hidden">
-                <SectionHeader title="G-code Sender" accent />
-                <div className="flex-1 overflow-hidden">
-                  <GcodeSender onFileLoaded={setGcodeLines} externalLines={gcodeLines} />
-                </div>
-              </Panel>
-            </PanelGroup>
-          </Panel>
+            {/* CENTER column */}
+            <Panel defaultSize={44} minSize={30} className="flex flex-col overflow-hidden">
+              <PanelGroup direction="vertical" className="h-full">
+                <Panel defaultSize={55} minSize={30}>
+                  <Visualizer3D gcodeLines={gcodeLines} />
+                </Panel>
+                {divider('horizontal')}
+                <Panel defaultSize={45} minSize={25} className="flex flex-col overflow-hidden">
+                  <SectionHeader title="G-code Sender" accent />
+                  <div className="flex-1 overflow-hidden">
+                    <GcodeSender onFileLoaded={setGcodeLines} externalLines={gcodeLines} />
+                  </div>
+                </Panel>
+              </PanelGroup>
+            </Panel>
 
-          {divider()}
+            {divider()}
 
-          {/* RIGHT column */}
-          <Panel defaultSize={34} minSize={25} maxSize={45} className="flex flex-col bg-zinc-950 border-l border-zinc-800 overflow-hidden">
-            <PanelGroup direction="vertical" className="h-full">
-              <Panel defaultSize={28} minSize={20}>
-                <SectionHeader title="Work Coordinates" />
-                <WorkCoordinates />
-              </Panel>
-              {divider('horizontal')}
-              <Panel defaultSize={15} minSize={12}>
-                <SectionHeader title="Spindle & Coolant" />
-                <SpindleCoolant />
-              </Panel>
-              {divider('horizontal')}
-              <Panel defaultSize={20} minSize={15}>
-                <SectionHeader title="Probe Routines" />
-                <ProbeRoutines />
-              </Panel>
-              {divider('horizontal')}
-              <Panel defaultSize={15} minSize={12}>
-                <SectionHeader title="Macros" />
-                <MacroPanel />
-              </Panel>
-              {divider('horizontal')}
-              <Panel defaultSize={22} minSize={15} className="flex flex-col overflow-hidden">
-                <ConsolePanel />
-              </Panel>
-            </PanelGroup>
-          </Panel>
-        </PanelGroup>
-      </div>
-      }
+            {/* RIGHT column */}
+            <Panel defaultSize={34} minSize={25} maxSize={45} className="flex flex-col bg-zinc-950 border-l border-zinc-800 overflow-hidden">
+              <PanelGroup direction="vertical" className="h-full">
+                <Panel defaultSize={28} minSize={20}>
+                  <SectionHeader title="Work Coordinates" />
+                  <WorkCoordinates />
+                </Panel>
+                {divider('horizontal')}
+                <Panel defaultSize={15} minSize={12}>
+                  <SectionHeader title="Spindle & Coolant" />
+                  <SpindleCoolant />
+                </Panel>
+                {divider('horizontal')}
+                <Panel defaultSize={20} minSize={15}>
+                  <SectionHeader title="Probe Routines" />
+                  <ProbeRoutines />
+                </Panel>
+                {divider('horizontal')}
+                <Panel defaultSize={15} minSize={12}>
+                  <SectionHeader title="Macros" />
+                  <MacroPanel />
+                </Panel>
+                {divider('horizontal')}
+                <Panel defaultSize={22} minSize={15} className="flex flex-col overflow-hidden">
+                  <ConsolePanel />
+                </Panel>
+              </PanelGroup>
+            </Panel>
+          </PanelGroup>
+        </div>
+      ))}
 
       {/* Modals */}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} initialTab={showSettings || 'grbl'} />}

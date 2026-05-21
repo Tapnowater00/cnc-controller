@@ -32,8 +32,8 @@ export function SettingsModal({ onClose, initialTab = 'grbl' }: Props) {
   const inputClass = "w-full bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-xs font-mono text-zinc-200"
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl w-[700px] max-h-[80vh] flex flex-col shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-xl w-full max-w-[700px] max-h-[90dvh] flex flex-col shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800">
           <span className="font-semibold text-zinc-200">Settings</span>
