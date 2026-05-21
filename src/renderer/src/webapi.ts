@@ -10,11 +10,15 @@ function isLocalNetwork(): boolean {
   return (
     h === 'localhost' ||
     h === '127.0.0.1' ||
+    h === '0.0.0.0' ||
+    h.endsWith('.local') ||                 // mDNS, e.g. raspberrypi.local
+    !h.includes('.') ||                     // bare hostname, e.g. raspberrypi
     /^192\.168\./.test(h) ||
     /^10\./.test(h) ||
     /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(h) ||
+    /^169\.254\./.test(h) ||                // link-local (auto-IP)
     /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h) || // Tailscale CGNAT
-    /^\d+\.\d+\.\d+\.\d+$/.test(h)  // any raw IP → treat as direct bridge
+    /^\d+\.\d+\.\d+\.\d+$/.test(h)          // any raw IP → treat as direct bridge
   )
 }
 
